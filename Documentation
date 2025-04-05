@@ -138,7 +138,3 @@ This pipeline integrates a variety of techniques to preprocess data effectively 
 - **Evaluation:** Uses ROC AUC and threshold optimization for performance assessment, supplemented by cross-validation and feature importance analysis.
 
 The resulting predictions are well-suited for binary classification tasks, with outputs saved for further analysis or submission.
-
---- 
-
-This documentation encapsulates all techniques observed in the provided scripts, ensuring a complete and self-contained reference for the machine learning pipeline.
