@@ -1,0 +1,144 @@
+# Machine Learning Pipeline Documentation for Binary Classification
+
+This documentation outlines the techniques employed in a machine learning pipeline designed for a binary classification task. The pipeline is divided into two main phases: **data preprocessing** and **model training and evaluation**. Multiple scripts contribute to this process, utilizing various methods to ensure robust data preparation and model performance.
+
+## 1. Data Preprocessing
+
+The data preprocessing phase prepares the raw data (`data_devsample.csv` for training and `data_to_score.csv` for testing) for modeling by addressing missing values, encoding variables, and standardizing features. The following techniques were applied:
+
+### Handling Missing Values
+- **Categorical Columns:**
+  - Missing values were filled with the string `"Missing"` to preserve information and enable subsequent encoding.
+- **Numerical Columns:**
+  - Missing values were imputed using **K-Nearest Neighbors (KNN) Imputation** with 5 neighbors (`n_neighbors=5`) after standardization to ensure accurate neighbor-based imputation.
+- **Target Variable:**
+  - Rows with missing values in the `'TARGET'` column were identified and, as a standard practice, assumed to be excluded from training to ensure valid supervised learning, although this was not explicitly coded (checked via `df[df['TARGET'].isna()]`).
+
+### Encoding Categorical Variables
+- **One-Hot Encoding:**
+  - Categorical columns were transformed into binary features using one-hot encoding with `drop_first=True` to avoid multicollinearity, expanding the feature set based on unique categories.
+
+### Standardization
+- **StandardScaler:**
+  - Numerical columns were standardized using `StandardScaler` before KNN imputation to normalize the data, ensuring consistent scales across features. After imputation, the data was inverse-transformed to its original scale for model training.
+
+### Feature Selection
+- **Missing Value Threshold:**
+  - Columns with more than 50% missing values were dropped to maintain data quality and reduce noise (`X.loc[:, X.isna().mean() < 0.5]`).
+- **Manual Column Exclusion:**
+  - Specific columns (`'TARGET'`, `'SK_ID_CURR'`, `'TIME'`, `'BASE'`, `'DAY'`) were removed from the training features, and a subset (`'SK_ID_CURR'`, `'TIME'`, `'BASE'`, `'DAY'`) from the test features, as they were deemed irrelevant or identifiers.
+
+### Data Alignment
+- **Column Reindexing:**
+  - The test dataset was aligned with the training dataset’s feature set post-one-hot encoding using `reindex`, filling missing columns with zeros to ensure consistency (`X_pred.reindex(columns=kept_columns, fill_value=0)`).
+
+### Infinity Handling
+- **Replacement of Infinite Values:**
+  - Infinite values (both positive and negative) in numerical columns were replaced with `NaN` before imputation to prevent computational errors (`replace([np.inf, -np.inf], np.nan)`).
+
+### Output
+- Processed training data (with the target re-added) and test data were saved as `"processed_train.csv"` and `"processed_test.csv"`, respectively, for use in subsequent modeling steps.
+
+---
+
+## 2. Model Training and Evaluation
+
+Three machine learning models—**LightGBM**, **Random Forest**, and **XGBoost**—were trained and evaluated using the preprocessed data. The following techniques were employed across these models:
+
+### Models Utilized
+- **LightGBM:**
+  - A gradient boosting framework optimized for speed and scalability.
+- **Random Forest:**
+  - An ensemble method using decision trees for robust classification.
+- **XGBoost:**
+  - Another gradient boosting framework known for high performance and flexibility.
+
+### Hyperparameter Tuning
+- **Optuna:**
+  - An automated hyperparameter optimization framework was used to tune model parameters for all three models, maximizing the **ROC AUC** score.
+  - **LightGBM Parameters:**
+    - Tuned: `learning_rate`, `num_leaves`, `max_depth`, `min_child_samples`, `subsample`, `colsample_bytree`, `reg_alpha`, `reg_lambda`.
+    - Fixed: `objective='binary'`, `metric='auc'`, `boosting_type='gbdt'`, `scale_pos_weight`.
+    - Trials: 50.
+  - **Random Forest Parameters:**
+    - Tuned: `n_estimators`, `max_depth`, `min_samples_split`, `min_samples_leaf`, `max_features`.
+    - Fixed: `random_state=42`, `n_jobs=-1`.
+    - Trials: 50 (full model), 30 (simpler model with top 50 features).
+  - **XGBoost Parameters:**
+    - Tuned: `learning_rate`, `max_depth`, `min_child_weight`, `subsample`, `colsample_bytree`, `gamma`, `reg_alpha`, `reg_lambda`.
+    - Fixed: `objective='binary:logistic'`, `tree_method='hist'`, `predictor='cpu_predictor'`, `scale_pos_weight`, `eval_metric='auc'`.
+    - Trials: 50.
+
+### Handling Class Imbalance
+- **Scale Pos Weight:**
+  - For **LightGBM** and **XGBoost**, the `scale_pos_weight` parameter was calculated as the ratio of negative to positive samples (`(y == 0).sum() / (y == 1).sum()`) to address class imbalance.
+- **Random Forest:**
+  - No explicit parameter was set, relying on the model’s inherent ability to handle imbalance through ensemble averaging.
+
+### Early Stopping
+- **LightGBM and XGBoost:**
+  - Early stopping was implemented to prevent overfitting, halting training when the validation set’s performance (ROC AUC) stopped improving after 100 (LightGBM) or 50 (XGBoost) rounds.
+
+### Evaluation Metric
+- **ROC AUC:**
+  - The Area Under the Receiver Operating Characteristic Curve (ROC AUC) was the primary metric for model evaluation and hyperparameter tuning, suitable for imbalanced datasets.
+
+### Threshold Optimization
+- **Youden’s J Statistic:**
+  - The optimal decision threshold was determined by maximizing `TPR - FPR` (True Positive Rate minus False Positive Rate) on the validation set, computed using `roc_curve`.
+
+### Feature Importance
+- **Random Forest:**
+  - Feature importances were calculated (`best_model.feature_importances_`), and a simpler model was trained using the top 50 most important features to explore dimensionality reduction.
+
+### Cross-Validation
+- **Random Forest:**
+  - 5-fold stratified cross-validation was used during hyperparameter tuning to ensure robust performance estimates (`cross_val_score` with `cv=5`).
+- **XGBoost:**
+  - 5-fold stratified k-fold cross-validation (`StratifiedKFold`) was employed within the Optuna objective to evaluate model performance across multiple splits.
+
+### Visualization
+- **Optuna Visualizations (Random Forest):**
+  - Optimization history (`plot_optimization_history`) and parameter importances (`plot_param_importances`) were visualized to analyze the tuning process.
+
+### Data Splitting
+- **Train-Test Split:**
+  - The training data was split into training and validation sets (80-20 split) using `train_test_split` with stratification (`stratify=y`) to maintain class distribution.
+
+### Final Predictions
+- **Output Format:**
+  - Predictions included both probabilities (`TARGET_PROB`) and binary classifications (`TARGET`) based on the optimal threshold.
+  - Results were saved to CSV files:
+    - `"predicted_results_LightGBM.csv"`
+    - `"predicted_results_RF.csv"` (full model)
+    - `"predicted_results_top50_RF.csv"` (simpler model)
+    - `"predicted_results_XGBoost.csv"`.
+- **Identifier Restoration:**
+  - The `'SK_ID_CURR'` column from the original test data was included in the submission files.
+
+---
+
+## 3. Additional Techniques
+
+### Feature Name Cleaning
+- **LightGBM:**
+  - Feature names were cleaned to remove special characters (`str.replace(r'[^\w]', '_')`) to comply with LightGBM’s requirements.
+
+### Data Matrix Conversion
+- **XGBoost:**
+  - Data was converted to `DMatrix` format for efficient processing (`xgb.DMatrix`).
+
+---
+
+## Summary
+
+This pipeline integrates a variety of techniques to preprocess data effectively and train robust machine learning models:
+- **Preprocessing:** Handles missing values, encodes categorical variables, standardizes numerical features, and aligns datasets.
+- **Modeling:** Employs LightGBM, Random Forest, and XGBoost with optimized hyperparameters, addressing class imbalance and overfitting.
+- **Evaluation:** Uses ROC AUC and threshold optimization for performance assessment, supplemented by cross-validation and feature importance analysis.
+
+The resulting predictions are well-suited for binary classification tasks, with outputs saved for further analysis or submission.
+
+--- 
+
+This documentation encapsulates all techniques observed in the provided scripts, ensuring a complete and self-contained reference for the machine learning pipeline.
