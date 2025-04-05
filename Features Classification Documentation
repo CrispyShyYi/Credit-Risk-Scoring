@@ -1,0 +1,70 @@
+Data Features Classification:
+
+🏦 1. Application Info / Personal Demographics
+These describe the applicant’s personal characteristics:
+
+  CODE_GENDER, NAME_CONTRACT_TYPE, FLAG_OWN_CAR, FLAG_OWN_REALTY
+  CNT_CHILDREN, NAME_TYPE_SUITE, NAME_INCOME_TYPE
+  NAME_EDUCATION_TYPE, NAME_FAMILY_STATUS, NAME_HOUSING_TYPE
+  OCCUPATION_TYPE, ORGANIZATION_TYPE
+  CNT_FAM_MEMBERS, FLAG_MOBIL, FLAG_EMP_PHONE, FLAG_WORK_PHONE, FLAG_CONT_MOBILE, FLAG_PHONE, FLAG_EMAIL
+  WEEKDAY_APPR_PROCESS_START, HOUR_APPR_PROCESS_START, SK_ID_CURR
+
+💰 2. Financial Situation
+These relate to the applicant’s income and credit:
+
+  AMT_INCOME_TOTAL, AMT_CREDIT, AMT_ANNUITY, AMT_GOODS_PRICE
+  EXT_SOURCE_1, EXT_SOURCE_2, EXT_SOURCE_3 (external risk scores or sources)
+
+🏡 3. Housing and Living Conditions
+Features about living space or housing quality:
+
+  REGION_POPULATION_RELATIVE  
+  APARTMENTS_AVG, BASEMENTAREA_AVG, ..., NONLIVINGAREA_MEDI (many of these appear in AVG, MODE, MEDI variants)
+  TOTALAREA_MODE, HOUSETYPE_MODE, WALLSMATERIAL_MODE, FONDKAPREMONT_MODE
+
+📆 4. Time-related Features
+These show the applicant's history and duration-related info (in days, usually negative from today):
+
+  DAYS_BIRTH, DAYS_EMPLOYED, DAYS_REGISTRATION, DAYS_ID_PUBLISH
+  DAYS_LAST_PHONE_CHANGE
+  OWN_CAR_AGE
+
+🌍 5. Regional & Mobility Indicators
+Describing applicant's relation to regions:
+
+  REGION_RATING_CLIENT, REGION_RATING_CLIENT_W_CITY
+  REG_REGION_NOT_LIVE_REGION, REG_REGION_NOT_WORK_REGION, LIVE_REGION_NOT_WORK_REGION, REG_CITY_NOT_LIVE_CITY, REG_CITY_NOT_WORK_CITY, LIVE_CITY_NOT_WORK_CITY
+
+🧾 6. Document Flags
+Flags indicating which documents were provided:
+
+  FLAG_DOCUMENT_2 to FLAG_DOCUMENT_21
+
+📉 7. Credit Bureau and Behavior Summary
+Behavioral indicators from bureau and historical credit usage:
+
+  AMT_REQ_CREDIT_BUREAU_* (hour, day, week, month, etc.)
+
+Ratios and delinquencies like:
+
+  MIN_AMTCR_*, MAX_AMTCR_*, STD_AMTCR_*, MEAN_DPD_*, MEDIAN_DPD_*
+  These are often grouped by:
+  time window: _0M_INFM, _0M_6M, etc.
+  loan status: _TYPE_EQ_ACTIVE, _TYPE_EQ_CLOSED
+
+🧠 8. Derived Statistical Features
+Ratios or engineered features:
+
+  MEAN_AMTCR_1M_3M_DIV_MEAN_AMTCR_3M_12M, etc.
+
+These seem like aggregated summaries comparing different periods or product types.
+
+🕒 9. Transaction Features
+Related to account activity time:
+
+  FIRST_TRANSACTION_TIME_MONTHS, LAST_TRANSACTION_TIME_MONTHS
+
+🧪 10. Miscellaneous
+  
+  TIME, BASE, DAY, MONTH
