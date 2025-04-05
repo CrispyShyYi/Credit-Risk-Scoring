@@ -4,7 +4,7 @@ This documentation outlines the techniques employed in a machine learning pipeli
 
 ## 1. Data Preprocessing
 
-The data preprocessing phase prepares the raw data (`data_devsample.csv` for training and `data_to_score.csv` for testing) for modeling by addressing missing values, encoding variables, and standardizing features. The following techniques were applied:
+The data preprocessing phase prepares the raw data (`data_devsample.csv` (59.4 MB) for training and `data_to_score.csv` (73.7 MB) for prediction) for modeling by addressing missing values, encoding variables, and standardizing features. The following techniques were applied:
 
 ### Handling Missing Values
 - **Categorical Columns:**
