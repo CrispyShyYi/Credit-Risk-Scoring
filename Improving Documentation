@@ -1,3 +1,5 @@
+Resource: https://chatgpt.com/share/67f1f20f-e76c-8003-9bd1-6e3bd6fee41e
+
 # Improving AUROC of XGBoost/LightGBM in Credit Risk Scoring
 
 Credit risk scoring has seen extensive use of **gradient boosting models** like **XGBoost** and **LightGBM**. In recent years (last ~5 years), researchers have proposed various enhancements to boost the **Area Under the ROC Curve (AUROC)** performance of these models on credit risk data (often large datasets with dozens to hundreds of features). Below, we summarize key peer-reviewed studies and their methods – focusing on credit scoring contexts – and highlight how each approach improved model AUROC. A comparison table is also provided for an at-a-glance overview.
