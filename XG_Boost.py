@@ -17,7 +17,8 @@ import concurrent.futures
 import logging
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Suppress warnings
@@ -202,7 +203,8 @@ if __name__ == "__main__":
         'verbosity': 0
     })
 
-    X_t, X_val, y_t, y_val = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+    X_t, X_val, y_t, y_val = train_test_split(X, y, test_size=0.2, 
+                                              stratify=y, random_state=42)
     dtrain_final = xgb.DMatrix(X_t, label=y_t)
     dval_final = xgb.DMatrix(X_val, label=y_val)
 
@@ -232,14 +234,16 @@ if __name__ == "__main__":
 
     # Feature importances
     importances = final_model.get_score(importance_type='gain')
-    importances_df = pd.DataFrame(list(importances.items()), columns=["feature", "importance"])
+    importances_df = pd.DataFrame(list(importances.items()), 
+                                  columns=["feature", "importance"])
     importances_df.sort_values(by="importance", ascending=False, inplace=True)
 
     # Parallel training for simpler models
     top_n_list = [25, 50, 75, 100]
     results = []
     with ProcessPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(train_with_optuna, n, X, y, X_pred, df_pred, importances_df, scale_pos_weight)
+        futures = [executor.submit(train_with_optuna, n, X, y, X_pred, df_pred, 
+                                   importances_df, scale_pos_weight)
                    for n in top_n_list]
         for future in concurrent.futures.as_completed(futures):
             try:
