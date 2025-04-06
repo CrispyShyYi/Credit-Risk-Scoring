@@ -12,7 +12,7 @@ The data preprocessing phase prepares the raw data (`data_devsample.csv` (59.4 M
 - **Numerical Columns:**
   - Missing values were imputed using **K-Nearest Neighbors (KNN) Imputation** with 5 neighbors (`n_neighbors=5`) after standardization to ensure accurate neighbor-based imputation.
 - **Target Variable:**
-  - Rows with missing values in the `'TARGET'` column were identified and, as a standard practice, assumed to be excluded from training to ensure valid supervised learning, although this was not explicitly coded (checked via `df[df['TARGET'].isna()]`).
+  - Rows with missing values in the `'TARGET'` column were identified and, as a standard practice, assumed to be excluded from training to ensure valid supervised learning.
 
 ### Encoding Categorical Variables
 - **One-Hot Encoding:**
@@ -24,17 +24,17 @@ The data preprocessing phase prepares the raw data (`data_devsample.csv` (59.4 M
 
 ### Feature Selection
 - **Missing Value Threshold:**
-  - Columns with more than 50% missing values were dropped to maintain data quality and reduce noise (`X.loc[:, X.isna().mean() < 0.5]`).
+  - Columns with more than 50% missing values were dropped to maintain data quality and reduce noise.
 - **Manual Column Exclusion:**
   - Specific columns (`'TARGET'`, `'SK_ID_CURR'`, `'TIME'`, `'BASE'`, `'DAY'`) were removed from the training features, and a subset (`'SK_ID_CURR'`, `'TIME'`, `'BASE'`, `'DAY'`) from the test features, as they were deemed irrelevant or identifiers.
 
 ### Data Alignment
 - **Column Reindexing:**
-  - The test dataset was aligned with the training dataset’s feature set post-one-hot encoding using `reindex`, filling missing columns with zeros to ensure consistency (`X_pred.reindex(columns=kept_columns, fill_value=0)`).
+  - The test dataset was aligned with the training dataset’s feature set post-one-hot encoding using `reindex`, filling missing columns with zeros to ensure consistency.
 
 ### Infinity Handling
 - **Replacement of Infinite Values:**
-  - Infinite values (both positive and negative) in numerical columns were replaced with `NaN` before imputation to prevent computational errors (`replace([np.inf, -np.inf], np.nan)`).
+  - Infinite values (both positive and negative) in numerical columns were replaced with `NaN` before imputation to prevent computational errors.
 
 ### Output
 - Processed training data (with the target re-added) and test data were saved as `"processed_train.csv"` and `"processed_test.csv"`, respectively, for use in subsequent modeling steps.
@@ -71,13 +71,13 @@ Three machine learning models—**LightGBM**, **Random Forest**, and **XGBoost**
 
 ### Handling Class Imbalance
 - **Scale Pos Weight:**
-  - For **LightGBM** and **XGBoost**, the `scale_pos_weight` parameter was calculated as the ratio of negative to positive samples (`(y == 0).sum() / (y == 1).sum()`) to address class imbalance.
+  - For **LightGBM** and **XGBoost**, the `scale_pos_weight` parameter was calculated as the ratio of negative to positive samples.
 - **Random Forest:**
   - No explicit parameter was set, relying on the model’s inherent ability to handle imbalance through ensemble averaging.
 
 ### Early Stopping
 - **LightGBM and XGBoost:**
-  - Early stopping was implemented to prevent overfitting, halting training when the validation set’s performance (ROC AUC) stopped improving after 100 (LightGBM) or 50 (XGBoost) rounds.
+  - Early stopping was implemented to prevent overfitting, halting training when the validation set’s performance (ROC AUC) stopped improving after a set number of rounds.
 
 ### Evaluation Metric
 - **ROC AUC:**
@@ -85,25 +85,25 @@ Three machine learning models—**LightGBM**, **Random Forest**, and **XGBoost**
 
 ### Threshold Optimization
 - **Youden’s J Statistic:**
-  - The optimal decision threshold was determined by maximizing `TPR - FPR` (True Positive Rate minus False Positive Rate) on the validation set, computed using `roc_curve`.
+  - The optimal decision threshold was determined by maximizing `TPR - FPR` (True Positive Rate minus False Positive Rate) on the validation set.
 
 ### Feature Importance
 - **Random Forest:**
-  - Feature importances were calculated (`best_model.feature_importances_`), and a simpler model was trained using the top 50 most important features to explore dimensionality reduction.
+  - Feature importances were calculated (`feature_importances_`), and a simpler model was trained using the top 50 most important features to explore dimensionality reduction.
 
 ### Cross-Validation
 - **Random Forest:**
-  - 5-fold stratified cross-validation was used during hyperparameter tuning to ensure robust performance estimates (`cross_val_score` with `cv=5`).
+  - 5-fold stratified cross-validation was used during hyperparameter tuning to ensure robust performance estimates.
 - **XGBoost:**
-  - 5-fold stratified k-fold cross-validation (`StratifiedKFold`) was employed within the Optuna objective to evaluate model performance across multiple splits.
+  - 5-fold stratified k-fold cross-validation was employed within the Optuna objective to evaluate model performance across multiple splits.
 
 ### Visualization
 - **Optuna Visualizations (Random Forest):**
-  - Optimization history (`plot_optimization_history`) and parameter importances (`plot_param_importances`) were visualized to analyze the tuning process.
+  - Optimization history and parameter importances were visualized to analyze the tuning process.
 
 ### Data Splitting
 - **Train-Test Split:**
-  - The training data was split into training and validation sets (80-20 split) using `train_test_split` with stratification (`stratify=y`) to maintain class distribution.
+  - The training data was split into training and validation sets (80-20 split) with stratification to maintain class distribution.
 
 ### Final Predictions
 - **Output Format:**
@@ -122,11 +122,21 @@ Three machine learning models—**LightGBM**, **Random Forest**, and **XGBoost**
 
 ### Feature Name Cleaning
 - **LightGBM:**
-  - Feature names were cleaned to remove special characters (`str.replace(r'[^\w]', '_')`) to comply with LightGBM’s requirements.
+  - Feature names were cleaned to remove special characters (`[^\w]`) to comply with LightGBM’s requirements.
 
 ### Data Matrix Conversion
 - **XGBoost:**
-  - Data was converted to `DMatrix` format for efficient processing (`xgb.DMatrix`).
+  - Data was converted to `DMatrix` format for efficient processing.
+
+---
+
+## 4. Extended Approaches
+
+### Parallel Training of Simpler XGBoost Models
+After training a full XGBoost model, an additional approach involved selecting smaller subsets of the most important features (e.g., top 25, 50, 75, and 100) for training simpler models. These simplified models were trained in parallel, allowing for quicker experimentation with varying numbers of features to compare performance, complexity, and potential speed gains.
+
+### SMOTEENN + PCA
+A further method combined SMOTEENN (an oversampling and undersampling technique) with Principal Component Analysis (PCA), retaining 99% of variance. This approach directly addressed class imbalance and high-dimensional data, leading to an **AUROC exceeding 0.9** in some experiments. By combining sophisticated sampling methods with dimensionality reduction, this strategy can notably enhance predictive performance for imbalanced datasets.
 
 ---
 
@@ -136,5 +146,6 @@ This pipeline integrates a variety of techniques to preprocess data effectively 
 - **Preprocessing:** Handles missing values, encodes categorical variables, standardizes numerical features, and aligns datasets.
 - **Modeling:** Employs LightGBM, Random Forest, and XGBoost with optimized hyperparameters, addressing class imbalance and overfitting.
 - **Evaluation:** Uses ROC AUC and threshold optimization for performance assessment, supplemented by cross-validation and feature importance analysis.
+- **Extended Approaches:** Explores additional strategies such as parallelized training of feature-subset XGBoost models and combining SMOTEENN with PCA for advanced class imbalance handling and dimensionality reduction.
 
 The resulting predictions are well-suited for binary classification tasks, with outputs saved for further analysis or submission.
